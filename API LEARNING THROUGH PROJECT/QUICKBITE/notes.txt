@@ -414,4 +414,4 @@ Every line of code in QuickBite is like a person in a restaurant:
 3. `POST /orders/` = "Place order at counter"
 4. `GET /orders/` = "Ask for order history"
 
-And just like a real restaurant, if any staff member is missing or confused, the whole system breaks down! 🍕🚀
+And just like a real restaurant, if any staff member is missing or confused, the whole system breaks down! 🍕🚀 
