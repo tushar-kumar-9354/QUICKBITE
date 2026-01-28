@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QuickBite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            padding: 40px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-width: 400px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 8px 14px;
+            cursor: pointer;
+        }
+        input {
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        pre {
+            background: #eee;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🍔 QuickBite</h1>
+<p>API + Website working together</p>
+<!-- REGISTRATION -->
+<div class="card">
+    <h3>Sign Up</h3>
+    <input id="reg_username" placeholder="Username">
+    <input id="reg_password" type="password" placeholder="Password">
+    <button onclick="register()">Register</button>
+    <p id="registerStatus"></p>
+</div>
+
+<!-- LOGIN -->
+<div class="card">
+    <h3>Login</h3>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p id="loginStatus"></p>
+</div>
+
+<!-- CREATE ORDER -->
+<div class="card">
+    <h3>Create New Order</h3>
+    <input id="order_item" placeholder="Item (e.g., Burger, Pizza)">
+    <input id="order_quantity" type="number" placeholder="Quantity" min="1" value="1">
+    <button onclick="createOrder()">Place Order</button>
+    <p id="createOrderStatus"></p>
+</div>
+
+<!-- VIEW ORDERS -->
+<div class="card">
+    <h3>My Orders</h3>
+    <button onclick="getOrders()">Fetch Orders</button>
+    <pre id="orders"></pre>
+</div>
+<script>
+async function login() {
+    const res = await fetch("/auth/login", {  // FIXED: Added /auth prefix
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
+        })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        token = data.token;
+        document.getElementById("loginStatus").innerText = "✅ Logged in";
+    } else {
+        document.getElementById("loginStatus").innerText = data.error;
+    }
+}
+
+async function register() {
+    const res = await fetch("/auth/register", {  // FIXED: Added /auth prefix
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username: document.getElementById("reg_username").value,
+            password: document.getElementById("reg_password").value
+        })
+    });
+
+    const data = await res.json();
+    document.getElementById("registerStatus").innerText =
+        res.ok ? "✅ Registered" : data.error;
+}
+async function createOrder() {
+    if (!token) {
+        alert("Login first");
+        return;
+    }
+
+    const item = document.getElementById("order_item").value;
+    const quantity = document.getElementById("order_quantity").value;
+
+    if (!item) {
+        alert("Please enter an item");
+        return;
+    }
+
+    if (!quantity || quantity < 1) {
+        alert("Please enter a valid quantity");
+        return;
+    }
+
+    const res = await fetch("/orders/", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            item: item,
+            quantity: parseInt(quantity)
+        })
+    });
+
+    const data = await res.json();
+    
+    if (res.ok) {
+        document.getElementById("createOrderStatus").innerText = 
+            "✅ Order placed: " + data.order.item + " x" + data.order.quantity;
+        // Clear form
+        document.getElementById("order_item").value = "";
+        document.getElementById("order_quantity").value = "1";
+        // Refresh orders list
+        getOrders();
+    } else {
+        document.getElementById("createOrderStatus").innerText = 
+            "❌ " + (data.error || "Failed to create order");
+    }
+}
+async function getOrders() {
+    if (!token) {
+        alert("Login first");
+        return;
+    }
+
+    const res = await fetch("/orders/", {  // Changed from "/orders/orders"
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    });
+
+    const data = await res.json();
+    document.getElementById("orders").innerText =
+        JSON.stringify(data, null, 2);
+}
+</script>
+
+</body>
+</html>
